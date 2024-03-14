@@ -11,7 +11,7 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false,
+      "all": true,
       "shell": {
         "all": false,
         "open": true
@@ -19,7 +19,7 @@
     },
     "windows": [
       {
-        "title": "rhash-tauri",
+        "title": "文件哈希值计算器",
         "width": 800,
         "height": 600
       }

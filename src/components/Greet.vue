@@ -1,21 +1,40 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/api/dialog";
+import { appLocalDataDir } from "@tauri-apps/api/path";
 
-const greetMsg = ref("");
-const name = ref("");
+defineProps<{ meg: string }>();
+const outputMsg = ref<string>("");
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-  greetMsg.value = await invoke("greet", { name: name.value });
+onMounted(() => {
+  //  console.log(a * b);
+})
+const selectDir = async () => { 
+  const selected = await open({
+  directory: false,
+  multiple: false,
+  defaultPath:await appLocalDataDir(),
+});
+  if (selected === null) {
+    // user cancelled the selection
+    outputMsg.value = "选择文件";
+  } else {
+    // user selected a single directory
+    // greetMsg.value = selected;
+    console.log(selected);
+    outputMsg.value = await invoke("dig_file", {path: selected});
+  }
 }
+
 </script>
 
-<template>
-  <form class="row" @submit.prevent="greet">
-    <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-    <button type="submit">Greet</button>
-  </form>
 
-  <p>{{ greetMsg }}</p>
+
+<template>
+
+  <button @click="selectDir">选择文件</button>
+  <div id="displayElementId" v-html="outputMsg" style="text-align: left;" ></div> 
+
+
 </template>
