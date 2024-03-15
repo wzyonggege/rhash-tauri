@@ -1,4 +1,5 @@
 use md5;
+use std::time::Instant;
 use sha2::{Digest, Sha256, Sha512};
 use sha1::Sha1;
 use std::fs::File;
@@ -15,23 +16,27 @@ pub struct DigestResult {
     pub sha256: String,
     pub sha512: String,
     pub md5: String,
+    pub duration: f64,
 }
 
 impl DigestResult {
     pub fn print_result(&self) -> String {
         format!("
         <b>文件</b>: {}<br><br>
+        用时: {:.3}秒<br><br>
         <b>MD5</b>: {}<br>
         <b>SHA-1</b>: {}<br>
         <b>SHA-256</b>: {}<br>
         <b>SHA-512</b>: {}<br>
         ", 
-        self.path, self.md5, self.sha1, self.sha256, self.sha512)
+        self.path, self.duration, self.md5, self.sha1, self.sha256, self.sha512)
     }
 }
 
 /// calculates sha256 digest as lowercase hex string
 pub fn cal_digest(path: &PathBuf) -> Result<DigestResult, String> {
+    let start = Instant::now();
+
     let input = File::open(path).unwrap();
     let mut reader = BufReader::new(input);
 
@@ -39,7 +44,7 @@ pub fn cal_digest(path: &PathBuf) -> Result<DigestResult, String> {
     let mut sha256_hasher = Sha256::new();
     let mut sha512_hasher = Sha512::new();
     let mut md5_hasher = md5::Context::new();
-    let mut buffer = [0; 1024*8];
+    let mut buffer = [0; 1024*128];
 
     loop {
         let bytes_read = reader.read(&mut buffer).unwrap();
@@ -57,13 +62,16 @@ pub fn cal_digest(path: &PathBuf) -> Result<DigestResult, String> {
     let sha512_digest = sha512_hasher.finalize();
     let md5_digest = md5_hasher.compute();
 
+    let duration = start.elapsed().as_secs_f64();
     let resp = DigestResult {
         path: path.as_path().display().to_string(),
         sha1: format!("{:x}", sha1_digest),
         sha256: format!("{:x}", sha256_digest),
         sha512: format!("{:x}", sha512_digest),
         md5: format!("{:x}", md5_digest),
+        duration,
     };
+    
     Ok(resp)
 }
 
